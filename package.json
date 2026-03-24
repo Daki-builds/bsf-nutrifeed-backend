@@ -1,0 +1,17 @@
+{
+  "name": "bsf-nutrifeed-backend",
+  "version": "1.0.0",
+  "description": "Backend server for bsf nutrifeed poultry",
+  "license": "ISC",
+  "author": "Obasi Daki",
+  "type": "commonjs",
+  "main": "src/app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "dotenv": "^17.3.1",
+    "express": "^5.2.1",
+    "nodemon": "^3.1.14"
+  }
+}
