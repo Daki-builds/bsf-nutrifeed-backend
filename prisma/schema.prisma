@@ -1,0 +1,105 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  farmer
+  admin
+  @@map("user_role")
+}
+
+model User {
+  id            Int       @id @default(autoincrement())
+  first_name    String    @db.VarChar(100)
+  last_name     String    @db.VarChar(100)
+  email         String    @unique @db.VarChar(255)
+  password_hash String    @db.VarChar(255)
+  role          UserRole  @default(farmer)
+  is_active     Boolean?  @default(true)
+  created_at    DateTime? @default(now()) @db.Timestamptz
+  updated_at    DateTime? @default(now()) @db.Timestamptz
+
+  batches       FeedProductionBatch[]
+  growth_logs   LarvaeGrowthLog[]
+  io_logs       InputOutputLog[]
+
+  @@map("users")
+}
+
+enum BatchStatus {
+  planned
+  active
+  harvested
+  failed
+  @@map("batch_status")
+}
+
+model FeedProductionBatch {
+  id                    Int          @id @default(autoincrement())
+  farmer_id             Int?
+  batch_number          String       @unique @db.VarChar(100)
+  start_date            DateTime     @db.Date
+  expected_harvest_date DateTime?    @db.Date
+  actual_harvest_date   DateTime?    @db.Date
+  status                BatchStatus? @default(planned)
+  total_yield_kg        Decimal?     @db.Decimal(10, 2)
+  notes                 String?
+  created_at            DateTime?    @default(now()) @db.Timestamptz
+  updated_at            DateTime?    @default(now()) @db.Timestamptz
+
+  farmer                User?             @relation(fields: [farmer_id], references: [id], onDelete: SetNull)
+  growth_logs           LarvaeGrowthLog[]
+  io_logs               InputOutputLog[]
+
+  @@map("feed_production_batches")
+}
+
+model LarvaeGrowthLog {
+  id                Int       @id @default(autoincrement())
+  batch_id          Int
+  recorded_by       Int?
+  log_time          DateTime? @default(now()) @db.Timestamptz
+  larvae_stage      String?   @db.VarChar(50)
+  avg_weight_g      Decimal?  @db.Decimal(10, 4)
+  survival_rate_est Decimal?  @db.Decimal(5, 2)
+  temperature_c     Decimal?  @db.Decimal(5, 2)
+  humidity_percent  Decimal?  @db.Decimal(5, 2)
+  observations      String?
+  created_at        DateTime? @default(now()) @db.Timestamptz
+
+  batch             FeedProductionBatch @relation(fields: [batch_id], references: [id], onDelete: Cascade)
+  recorder          User?               @relation(fields: [recorded_by], references: [id], onDelete: SetNull)
+
+  @@map("larvae_growth_logs")
+}
+
+enum LogActivityType {
+  input
+  output
+  @@map("log_activity_type")
+}
+
+model InputOutputLog {
+  id            Int             @id @default(autoincrement())
+  batch_id      Int
+  recorded_by   Int?
+  log_time      DateTime?       @default(now()) @db.Timestamptz
+  activity_type LogActivityType
+  material_name String          @db.VarChar(100)
+  quantity      Decimal         @db.Decimal(10, 2)
+  unit          String?         @default("kg") @db.VarChar(20)
+  notes         String?
+  created_at    DateTime?       @default(now()) @db.Timestamptz
+
+  batch         FeedProductionBatch @relation(fields: [batch_id], references: [id], onDelete: Cascade)
+  recorder      User?               @relation(fields: [recorded_by], references: [id], onDelete: SetNull)
+
+  @@map("input_output_logs")
+}
